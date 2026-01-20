@@ -1,0 +1,28 @@
+# ESP-IDF Build Artifacts
+build/
+*/build/
+sdkconfig.old
+*/sdkconfig.old
+managed_components/
+*/managed_components/
+dependencies.lock
+*/dependencies.lock
+
+# Python
+__pycache__/
+*.py[cod]
+
+# IDE
+.vscode/
+!.vscode/settings.json
+!.vscode/c_cpp_properties.json
+!.vscode/launch.json
+.idea/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Secrets (NEVER commit)
+secrets.h
+credentials.h
