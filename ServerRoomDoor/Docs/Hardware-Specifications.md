@@ -69,7 +69,7 @@ Complete hardware component list and wiring specifications for the Server Room D
 
 | Component | Model | Quantity | Interface | Notes |
 |-----------|-------|----------|-----------|-------|
-| LCD Display | 20x4 Character LCD | 1 | I2C (PCF8574) | Address: 0x27 |
+| TFT Display | ILI9341 | 1 | SPI | 240x320 TFT, 2.4" or 2.8" |
 
 ---
 
@@ -87,8 +87,11 @@ Complete hardware component list and wiring specifications for the Server Room D
 | Door Closed Switch | GPIO23 | INPUT_PULLUP |
 | Mode Switch | GPIO26 | INPUT_PULLUP |
 | AVR Power Sense | GPIO32 | Analog input |
-| I2C SDA | GPIO21 | LCD Display |
-| I2C SCL | GPIO22 | LCD Display |
+| SPI MOSI | GPIO21 | TFT Display |
+| SPI CLK | GPIO22 | TFT Display |
+| Display CS | GPIO10 | TFT Display |
+| Display DC | GPIO11 | TFT Display |
+| Display RST | GPIO12 | TFT Display |
 
 ### Proposed ESP32-C6 Pin Assignments
 
@@ -102,8 +105,11 @@ Complete hardware component list and wiring specifications for the Server Room D
 | Door Closed Switch | GPIO19 | Input | INPUT_PULLUP |
 | Mode Switch | GPIO20 | Input | INPUT_PULLUP |
 | AVR Power Sense | GPIO0 | ADC | Analog input |
-| I2C SDA | GPIO6 | I2C | Shared bus |
-| I2C SCL | GPIO7 | I2C | Shared bus |
+| SPI MOSI | GPIO6 | SPI | TFT Display |
+| SPI CLK | GPIO7 | SPI | TFT Display |
+| Display CS | GPIO10 | Output | TFT chip select |
+| Display DC | GPIO11 | Output | TFT data/command |
+| Display RST | GPIO21 | Output | TFT reset |
 | Status LED | GPIO15 | Output | Activity indicator |
 
 ---
@@ -179,15 +185,19 @@ Note: Voltage divider optional if AVR output is already 3.3V
       ADC threshold ~1000 indicates AVR ON
 ```
 
-### I2C LCD Connection
+### SPI TFT Display Connection (ILI9341)
 
 ```
-LCD Module (PCF8574)         ESP32-C6
+TFT Display (ILI9341)        ESP32-C6
 ┌─────────────┐            ┌──────────┐
-│  VCC        ├────────────┤ 5V (USB) │
+│  VCC        ├────────────┤ 3.3V     │
 │  GND        ├────────────┤ GND      │
-│  SDA        ├────────────┤ GPIO6    │
-│  SCL        ├────────────┤ GPIO7    │
+│  MOSI       ├────────────┤ GPIO6    │
+│  SCK        ├────────────┤ GPIO7    │
+│  CS         ├────────────┤ GPIO10   │
+│  DC         ├────────────┤ GPIO11   │
+│  RST        ├────────────┤ GPIO21   │
+│  LED        ├────────────┤ 3.3V     │  (or GPIO for PWM control)
 └─────────────┘            └──────────┘
 ```
 
@@ -200,11 +210,11 @@ LCD Module (PCF8574)         ESP32-C6
 | ESP32-C6 | 3.3V | 80mA | 500mA (WiFi TX) |
 | L298N Logic | 5V | 50mA | 100mA |
 | Linear Actuator | 12V | 500mA | 3A (stall) |
-| LCD Display | 5V | 20mA | 200mA (backlight) |
+| TFT Display (ILI9341) | 3.3V | 50mA | 100mA (backlight) |
 | Buttons/Switches | - | 0mA | 0mA (passive) |
 
 **Power Supplies Required:**
-1. **5V USB:** For ESP32-C6 and LCD (~1A recommended)
+1. **5V USB:** For ESP32-C6 and TFT display (~1A recommended)
 2. **12V DC:** For linear actuator via L298N (~5A for margin)
 
 ---
@@ -243,7 +253,7 @@ LCD Module (PCF8574)         ESP32-C6
 | Microswitch | 2 | Amazon | Limit switches |
 | Momentary Pushbutton | 2 | Amazon | Panel mount |
 | Toggle Switch | 1 | Amazon | SPST, panel mount |
-| 20x4 LCD + I2C Backpack | 1 | Amazon | PCF8574 based |
+| ILI9341 TFT Display | 1 | Amazon | 2.4" or 2.8" SPI, 240x320 |
 | 12V 5A Power Supply | 1 | Amazon | For motor |
 | USB-C Power Supply | 1 | - | 5V 1A for logic |
 | Enclosure | 1 | - | Project box |

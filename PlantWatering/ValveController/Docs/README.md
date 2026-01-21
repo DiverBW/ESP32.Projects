@@ -22,8 +22,8 @@ The controller monitors water pressure to confirm valve operation and water avai
      │                            │                            │
      ▼                            ▼                            ▼
 ┌─────────────────────┐  ┌─────────────────────┐  ┌───────────────┐
-│  Irrigation System  │  │    Drip System      │  │  LCD Display  │
-│  ┌───────┐ ┌──────┐ │  │  ┌───────┐ ┌──────┐ │  │    (I2C)      │
+│  Irrigation System  │  │    Drip System      │  │  TFT Display  │
+│  ┌───────┐ ┌──────┐ │  │  ┌───────┐ ┌──────┐ │  │  (ILI9341)    │
 │  │Pressure│ │Valve │ │  │  │Pressure│ │Valve │ │  └───────────────┘
 │  │Sensor │ │Relay │ │  │  │Sensor │ │Relay │ │
 │  └───────┘ └──────┘ │  │  └───────┘ └──────┘ │
@@ -56,7 +56,7 @@ The controller monitors water pressure to confirm valve operation and water avai
 - **Pressure Sensors:** 2x Analog water pressure transducers
 - **Valve Control:** 2x Relay modules for master valves
 - **Status LEDs:** 2x LED indicators for water availability
-- **Display:** 20x4 LCD (I2C)
+- **Display:** ILI9341 TFT (SPI)
 
 ### Water Sources
 

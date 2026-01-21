@@ -18,8 +18,8 @@ The Server Room Door Controller automatically manages a door using a linear actu
      │                          │         │                            │
      ▼                          ▼         ▼                            ▼
 ┌───────────────┐     ┌─────────────┐ ┌────────────────┐     ┌───────────────┐
-│ Linear Motor  │     │ Microswitches│ │Manual Buttons │     │  LCD Display  │
-│   (L298N)     │     │  (Open/Close)│ │ (Open/Close)  │     │    (I2C)      │
+│ Linear Motor  │     │ Microswitches│ │Manual Buttons │     │  TFT Display  │
+│   (L298N)     │     │  (Open/Close)│ │ (Open/Close)  │     │  (ILI9341)    │
 └───────────────┘     └─────────────┘ └────────────────┘     └───────────────┘
         │                    │                │                      │
         │                    │                │                      │
@@ -67,7 +67,7 @@ The Server Room Door Controller automatically manages a door using a linear actu
 - **Control:** 2x Pushbuttons (open, close)
 - **Mode Select:** Toggle switch (Auto/Manual)
 - **AVR Detection:** Analog voltage sensing (3V when on)
-- **Display:** 20x4 LCD (I2C)
+- **Display:** ILI9341 TFT (SPI)
 
 ### Operating Modes
 

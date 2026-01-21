@@ -8,7 +8,7 @@ This project provides visual parking guidance for a two-car garage using:
 - Distance sensing via VL53L1X Time-of-Flight sensors
 - LED strip indicators (WS2812B, 180 LEDs per slot)
 - 120V light towers (Blue/Yellow/Green/Red approach indicators)
-- LCD status display
+- ILI9341 TFT status display
 
 ## Deployment Architecture
 
@@ -44,7 +44,7 @@ See [Architecture-Decision-Dual-Deployment.md](Architecture-Decision-Dual-Deploy
 | C6-Standard-Breakout | 1 | Standard breakout board |
 | ESP32-C6-DevKitC-1-N8 | 1 | 8MB flash variant |
 | VL53L1X ToF Sensor | 1 | I2C, default address 0x29 |
-| 20x4 I2C LCD | 1 | PCF8574 backpack @ 0x27 |
+| ILI9341 TFT Display | 1 | 240x320 SPI display |
 | WS2812B LED Strip | 1 | 180 LEDs |
 | 4-Channel SSR Module | 1 | External, 120V AC rated |
 | LED Strip Interface Board | 1 | Level shifter (see below) |
@@ -54,7 +54,7 @@ See [Architecture-Decision-Dual-Deployment.md](Architecture-Decision-Dual-Deploy
 
 | Address | Device |
 |---------|--------|
-| 0x27 | PCF8574 (LCD backpack) |
+| - | ILI9341 uses SPI, not I2C |
 | 0x29 | VL53L1X ToF Sensor |
 
 ### GPIO Assignments (Per Slot)

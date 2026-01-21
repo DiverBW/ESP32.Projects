@@ -43,7 +43,7 @@ Complete hardware component list and wiring specifications for the Garage Door C
 
 | Component | Model | Quantity | Interface | Notes |
 |-----------|-------|----------|-----------|-------|
-| LCD Display | 16x2 Character LCD | 1 | I2C (PCF8574) | Address: 0x27 |
+| TFT Display | ILI9341 | 1 | SPI | 240x320 TFT, 2.4" or 2.8" |
 
 ---
 
@@ -57,8 +57,11 @@ Complete hardware component list and wiring specifications for the Garage Door C
 | Large Door Relay | GPIO0 | D3 | Active LOW |
 | Small Door Sensor | GPIO14 | D5 | INPUT_PULLUP |
 | Small Door Relay | GPIO12 | D6 | Active LOW |
-| I2C SDA | GPIO4 | D2 | LCD Display |
-| I2C SCL | GPIO5 | D1 | LCD Display |
+| SPI MOSI | GPIO4 | D2 | TFT Display |
+| SPI CLK | GPIO5 | D1 | TFT Display |
+| Display CS | - | - | TFT Display |
+| Display DC | - | - | TFT Display |
+| Display RST | - | - | TFT Display |
 | Status LED | GPIO2 | D4 | Onboard LED |
 
 ### Proposed ESP32-C6 Pin Assignments
@@ -69,8 +72,11 @@ Complete hardware component list and wiring specifications for the Garage Door C
 | Large Door Relay | GPIO5 | Output | Active LOW |
 | Small Door Sensor | GPIO18 | Input | INPUT_PULLUP |
 | Small Door Relay | GPIO19 | Output | Active LOW |
-| I2C SDA | GPIO6 | I2C | Shared bus |
-| I2C SCL | GPIO7 | I2C | Shared bus |
+| SPI MOSI | GPIO6 | SPI | TFT Display |
+| SPI CLK | GPIO7 | SPI | TFT Display |
+| Display CS | GPIO10 | Output | TFT chip select |
+| Display DC | GPIO11 | Output | TFT data/command |
+| Display RST | GPIO21 | Output | TFT reset |
 | Status LED | GPIO15 | Output | Activity indicator |
 
 ---
@@ -120,15 +126,19 @@ Note: Relay contacts wired in PARALLEL with existing button
       Relay closes briefly to simulate button press
 ```
 
-### I2C LCD Connection
+### SPI TFT Display Connection (ILI9341)
 
 ```
-LCD Module (PCF8574)         ESP32-C6
+TFT Display (ILI9341)        ESP32-C6
 ┌─────────────┐            ┌──────────┐
-│  VCC        ├────────────┤ 5V (USB) │
+│  VCC        ├────────────┤ 3.3V     │
 │  GND        ├────────────┤ GND      │
-│  SDA        ├────────────┤ GPIO6    │
-│  SCL        ├────────────┤ GPIO7    │
+│  MOSI       ├────────────┤ GPIO6    │
+│  SCK        ├────────────┤ GPIO7    │
+│  CS         ├────────────┤ GPIO10   │
+│  DC         ├────────────┤ GPIO11   │
+│  RST        ├────────────┤ GPIO21   │
+│  LED        ├────────────┤ 3.3V     │  (or GPIO for PWM control)
 └─────────────┘            └──────────┘
 ```
 
@@ -141,7 +151,7 @@ LCD Module (PCF8574)         ESP32-C6
 | ESP32-C6 | 3.3V | 80mA | 500mA (WiFi TX) |
 | Reed Switch (x2) | - | 0mA | 0mA (passive) |
 | 2-Channel Relay Module | 5V | 30mA | 140mA (both active) |
-| LCD Display | 5V | 20mA | 200mA (backlight) |
+| TFT Display (ILI9341) | 3.3V | 50mA | 100mA (backlight) |
 
 **Total Power Budget:** ~5V @ 1A USB power supply recommended
 
@@ -183,7 +193,7 @@ LCD Module (PCF8574)         ESP32-C6
 | ESP32-C6-DevKitC-1 | 1 | Espressif/DigiKey | |
 | Magnetic Reed Switch | 2 | Amazon | NC type, wired |
 | 2-Channel Relay Module | 1 | Amazon | Optocoupler isolated |
-| 16x2 LCD + I2C Backpack | 1 | Amazon | PCF8574 based |
+| ILI9341 TFT Display | 1 | Amazon | 2.4" or 2.8" SPI, 240x320 |
 | USB-C Power Supply | 1 | - | 5V 1A minimum |
 | Enclosure | 1 | - | Wall mount box |
 | Low Voltage Wire | 50ft | Home Depot | 22 AWG, 4-conductor |

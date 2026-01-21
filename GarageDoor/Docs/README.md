@@ -4,7 +4,7 @@ Documentation for the dual garage door monitoring and control system.
 
 ## Project Overview
 
-The Garage Door Controller monitors the open/closed status of two garage doors using magnetic reed switches and provides remote control capability via relay-driven button pushers. Status is displayed locally on an LCD and published via MQTT for HomeKit integration.
+The Garage Door Controller monitors the open/closed status of two garage doors using magnetic reed switches and provides remote control capability via relay-driven button pushers. Status is displayed locally on a TFT display and published via MQTT for HomeKit integration.
 
 ## System Architecture
 
@@ -18,7 +18,7 @@ The Garage Door Controller monitors the open/closed status of two garage doors u
      │                              │                              │
      ▼                              ▼                              ▼
 ┌─────────────────────┐  ┌─────────────────────┐  ┌───────────────┐
-│    Large Door       │  │    Small Door       │  │  LCD Display  │
+│    Large Door       │  │    Small Door       │  │  TFT Display  │
 │  ┌───────┐ ┌──────┐ │  │  ┌───────┐ ┌──────┐ │  │    (I2C)      │
 │  │ Reed  │ │Button│ │  │  │ Reed  │ │Button│ │  └───────────────┘
 │  │Switch │ │Relay │ │  │  │Switch │ │Relay │ │
@@ -51,7 +51,7 @@ The Garage Door Controller monitors the open/closed status of two garage doors u
 - **MCU:** ESP32-C6 (upgraded from ESP8266)
 - **Door Sensors:** 2x Magnetic reed switches (normally closed)
 - **Button Control:** 2x Relay modules for wall button simulation
-- **Display:** 16x2 LCD (I2C)
+- **Display:** ILI9341 TFT (SPI)
 
 ### Door States
 

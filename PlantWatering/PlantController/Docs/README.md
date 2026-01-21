@@ -18,8 +18,8 @@ The Plant Controller monitors soil moisture for a single potted plant and contro
         │                    │                    │
         ▼                    ▼                    ▼
 ┌───────────────┐   ┌───────────────┐   ┌───────────────┐
-│   Moisture    │   │  Water Valve  │   │  LCD Display  │
-│    Sensor     │   │    Relay      │   │    (I2C)      │
+│   Moisture    │   │  Water Valve  │   │  TFT Display  │
+│    Sensor     │   │    Relay      │   │  (ILI9341)    │
 └───────────────┘   └───────────────┘   └───────────────┘
 ```
 
@@ -48,7 +48,7 @@ The Plant Controller monitors soil moisture for a single potted plant and contro
 - **MCU:** ESP32-C6
 - **Moisture Sensor:** DFRobot Waterproof Capacitive Soil Moisture Sensor (Analog)
 - **Valve Control:** Relay module for solenoid valve
-- **Display:** 20x4 LCD (I2C)
+- **Display:** ILI9341 TFT (SPI)
 
 ### Operating Modes
 

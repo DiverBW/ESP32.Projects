@@ -74,7 +74,7 @@ The ability to use the **C6-Standard-Breakout board** across all projects provid
 | C6-Standard-Breakout | 1 | With appropriate solder jumper configuration |
 | ESP32-C6-DevKitC-1-N8 | 1 | Mounted on breakout |
 | VL53L1X ToF Sensor | 1 | Default I2C address 0x29 |
-| 20x4 I2C LCD | 1 | PCF8574 @ 0x27 |
+| ILI9341 TFT Display | 1 | 240x320 SPI display |
 | WS2812B LED Strip | 1 | 180 LEDs |
 | 4-Channel SSR Module | 1 | External, connected via screw terminals |
 | LED Strip Interface Board | 1 | Level shifter + connectors (see note below) |
@@ -85,8 +85,13 @@ The ability to use the **C6-Standard-Breakout board** across all projects provid
 
 | Function | GPIO | Notes |
 |----------|------|-------|
-| I2C SDA | GPIO6 | VL53L1X + LCD |
-| I2C SCL | GPIO7 | VL53L1X + LCD |
+| I2C SDA | GPIO6 | VL53L1X sensor |
+| I2C SCL | GPIO7 | VL53L1X sensor |
+| SPI MOSI | GPIO2 | TFT Display |
+| SPI CLK | GPIO3 | TFT Display |
+| Display CS | GPIO4 | TFT chip select |
+| Display DC | GPIO5 | TFT data/command |
+| Display RST | GPIO21 | TFT reset |
 | LED Strip Data | GPIO18 | Via level shifter |
 | SSR Blue | GPIO8 | Light tower |
 | SSR Yellow | GPIO9 | Light tower |

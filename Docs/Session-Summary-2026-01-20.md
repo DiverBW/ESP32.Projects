@@ -33,9 +33,9 @@ Analyzed legacy Arduino projects and documented hardware for ESP32-C6 migration:
 
 | Project | Key Hardware |
 |---------|--------------|
-| PlantController | DFRobot moisture sensor, valve relay, 20x4 LCD |
-| ValveController | 2x pressure sensors, 2x valve relays, 2x LED relays |
-| GarageDoor | 2x reed switches, 2x button relays, 16x2 LCD |
+| PlantController | DFRobot moisture sensor, valve relay, ILI9341 TFT |
+| ValveController | 2x pressure sensors, 2x valve relays, 2x LED relays, ILI9341 TFT |
+| GarageDoor | 2x reed switches, 2x button relays, ILI9341 TFT |
 | ServerRoomDoor | Linear actuator (L298N), microswitches, pushbuttons, AVR sensing |
 
 ### 3. Repository Configuration
