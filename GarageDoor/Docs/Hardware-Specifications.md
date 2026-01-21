@@ -64,20 +64,27 @@ Complete hardware component list and wiring specifications for the Garage Door C
 | Display RST | - | - | TFT Display |
 | Status LED | GPIO2 | D4 | Onboard LED |
 
-### Proposed ESP32-C6 Pin Assignments
+### ESP32-C6 Pin Assignments (BW Framework Standard)
+
+**Updated:** January 20, 2026 - Remapped to BW Framework standard GPIO assignments
 
 | Function | GPIO | Type | Notes |
 |----------|------|------|-------|
-| Large Door Sensor | GPIO4 | Input | INPUT_PULLUP |
-| Large Door Relay | GPIO5 | Output | Active LOW |
-| Small Door Sensor | GPIO18 | Input | INPUT_PULLUP |
-| Small Door Relay | GPIO19 | Output | Active LOW |
-| SPI MOSI | GPIO6 | SPI | TFT Display |
-| SPI CLK | GPIO7 | SPI | TFT Display |
+| Large Door Sensor | GPIO0 | Input | INPUT_PULLUP, ADC available |
+| Large Door Relay | GPIO11 | Output | Active LOW |
+| Small Door Sensor | GPIO1 | Input | INPUT_PULLUP, ADC available |
+| Small Door Relay | GPIO2 | Output | Active LOW |
+| SPI MOSI | GPIO7 | SPI | TFT Display (BW Framework) |
+| SPI SCK | GPIO6 | SPI | TFT Display (BW Framework) |
 | Display CS | GPIO10 | Output | TFT chip select |
-| Display DC | GPIO11 | Output | TFT data/command |
-| Display RST | GPIO21 | Output | TFT reset |
-| Status LED | GPIO15 | Output | Activity indicator |
+| Display DC | GPIO4 | Output | TFT data/command (BW Framework) |
+| Display RST | GPIO3 | Output | TFT reset (BW Framework) |
+| Display Backlight | GPIO5 | Output | PWM capable (BW Framework) |
+| I2C SDA | GPIO18 | I2C | For I2C peripherals |
+| I2C SCL | GPIO19 | I2C | For I2C peripherals |
+| Status LED | GPIO20 | Output | Activity indicator |
+
+**Note:** Pin assignments follow the BW Framework standard for C6-Standard-Breakout board compatibility.
 
 ---
 
@@ -89,8 +96,8 @@ Complete hardware component list and wiring specifications for the Garage Door C
 Reed Switch                  ESP32-C6
 ┌─────────────┐            ┌──────────────────┐
 │  COM        ├────────────┤ GND              │
-│  NC         ├────────────┤ GPIO4 (Large)    │
-│             │            │ GPIO18 (Small)   │
+│  NC         ├────────────┤ GPIO0 (Large)    │
+│             │            │ GPIO1 (Small)    │
 └─────────────┘            └──────────────────┘
 
 Note: Using NC (Normally Closed) contacts
@@ -105,8 +112,8 @@ Relay Module                 ESP32-C6
 ┌─────────────┐            ┌──────────────────┐
 │  VCC        ├────────────┤ 5V (USB)         │
 │  GND        ├────────────┤ GND              │
-│  IN         ├────────────┤ GPIO5 (Large)    │
-│             │            │ GPIO19 (Small)   │
+│  IN         ├────────────┤ GPIO11 (Large)   │
+│             │            │ GPIO2 (Small)    │
 └─────────────┘            └──────────────────┘
 ```
 
@@ -126,19 +133,19 @@ Note: Relay contacts wired in PARALLEL with existing button
       Relay closes briefly to simulate button press
 ```
 
-### SPI TFT Display Connection (ILI9341)
+### SPI TFT Display Connection (ILI9341) - BW Framework Standard
 
 ```
 TFT Display (ILI9341)        ESP32-C6
 ┌─────────────┐            ┌──────────┐
 │  VCC        ├────────────┤ 3.3V     │
 │  GND        ├────────────┤ GND      │
-│  MOSI       ├────────────┤ GPIO6    │
-│  SCK        ├────────────┤ GPIO7    │
+│  MOSI       ├────────────┤ GPIO7    │
+│  SCK        ├────────────┤ GPIO6    │
 │  CS         ├────────────┤ GPIO10   │
-│  DC         ├────────────┤ GPIO11   │
-│  RST        ├────────────┤ GPIO21   │
-│  LED        ├────────────┤ 3.3V     │  (or GPIO for PWM control)
+│  DC         ├────────────┤ GPIO4    │
+│  RST        ├────────────┤ GPIO3    │
+│  LED        ├────────────┤ GPIO5    │  (PWM for brightness control)
 └─────────────┘            └──────────┘
 ```
 

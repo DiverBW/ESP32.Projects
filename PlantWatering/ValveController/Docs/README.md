@@ -8,7 +8,7 @@ The Valve Controller manages the master water valves for the plant watering syst
 1. **Irrigation System** - Main house irrigation (Rachio controller integration)
 2. **Drip System** - Dedicated drip line for potted plants
 
-The controller monitors water pressure to confirm valve operation and water availability.
+The controller provides remote valve control with status indication.
 
 ## System Architecture
 
@@ -23,10 +23,10 @@ The controller monitors water pressure to confirm valve operation and water avai
      ▼                            ▼                            ▼
 ┌─────────────────────┐  ┌─────────────────────┐  ┌───────────────┐
 │  Irrigation System  │  │    Drip System      │  │  TFT Display  │
-│  ┌───────┐ ┌──────┐ │  │  ┌───────┐ ┌──────┐ │  │  (ILI9341)    │
-│  │Pressure│ │Valve │ │  │  │Pressure│ │Valve │ │  └───────────────┘
-│  │Sensor │ │Relay │ │  │  │Sensor │ │Relay │ │
-│  └───────┘ └──────┘ │  │  └───────┘ └──────┘ │
+│  ┌──────┐ ┌──────┐  │  │  ┌──────┐ ┌──────┐  │  │  (ILI9341)    │
+│  │Valve │ │ LED  │  │  │  │Valve │ │ LED  │  │  └───────────────┘
+│  │Relay │ │Relay │  │  │  │Relay │ │Relay │  │
+│  └──────┘ └──────┘  │  │  └──────┘ └──────┘  │
 └─────────────────────┘  └─────────────────────┘
 ```
 
@@ -53,17 +53,16 @@ The controller monitors water pressure to confirm valve operation and water avai
 ### Key Hardware Components
 
 - **MCU:** ESP32-C6
-- **Pressure Sensors:** 2x Analog water pressure transducers
 - **Valve Control:** 2x Relay modules for master valves
 - **Status LEDs:** 2x LED indicators for water availability
 - **Display:** ILI9341 TFT (SPI)
 
 ### Water Sources
 
-| Source | Purpose | Pressure Range |
-|--------|---------|----------------|
-| Irrigation | Rachio-controlled zones | 40-80 PSI |
-| Drip | Dedicated plant drip line | 20-40 PSI |
+| Source | Purpose |
+|--------|---------|
+| Irrigation | Rachio-controlled zones |
+| Drip | Dedicated plant drip line |
 
 ### MQTT Topics
 

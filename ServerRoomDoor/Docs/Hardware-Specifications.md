@@ -93,30 +93,37 @@ Complete hardware component list and wiring specifications for the Server Room D
 | Display DC | GPIO11 | TFT Display |
 | Display RST | GPIO12 | TFT Display |
 
-### Proposed ESP32-C6 Pin Assignments
+### ESP32-C6 Pin Assignments (BW Framework Standard)
+
+**Updated:** January 20, 2026 - Remapped to BW Framework standard GPIO assignments
 
 | Function | GPIO | Type | Notes |
 |----------|------|------|-------|
-| Motor IN1 | GPIO8 | Output | L298N direction |
-| Motor IN2 | GPIO9 | Output | L298N direction |
-| Open Button | GPIO4 | Input | INPUT_PULLUP |
-| Close Button | GPIO5 | Input | INPUT_PULLUP |
-| Door Open Switch | GPIO18 | Input | INPUT_PULLUP |
-| Door Closed Switch | GPIO19 | Input | INPUT_PULLUP |
-| Mode Switch | GPIO20 | Input | INPUT_PULLUP |
-| AVR Power Sense | GPIO0 | ADC | Analog input |
-| SPI MOSI | GPIO6 | SPI | TFT Display |
-| SPI CLK | GPIO7 | SPI | TFT Display |
+| Motor IN1 | GPIO11 | Output | L298N direction |
+| Motor IN2 | GPIO20 | Output | L298N direction |
+| Open Button | GPIO0 | Input | INPUT_PULLUP |
+| Close Button | GPIO1 | Input | INPUT_PULLUP |
+| Door Open Switch | GPIO21 | Input | INPUT_PULLUP (touch pin if no touch) |
+| Door Closed Switch | GPIO22 | Input | INPUT_PULLUP (touch pin if no touch) |
+| Mode Switch | GPIO23 | Input | INPUT_PULLUP (touch pin if no touch) |
+| AVR Power Sense | GPIO2 | ADC | Analog input |
+| SPI MOSI | GPIO7 | SPI | TFT Display (BW Framework) |
+| SPI SCK | GPIO6 | SPI | TFT Display (BW Framework) |
 | Display CS | GPIO10 | Output | TFT chip select |
-| Display DC | GPIO11 | Output | TFT data/command |
-| Display RST | GPIO21 | Output | TFT reset |
-| Status LED | GPIO15 | Output | Activity indicator |
+| Display DC | GPIO4 | Output | TFT data/command (BW Framework) |
+| Display RST | GPIO3 | Output | TFT reset (BW Framework) |
+| Display Backlight | GPIO5 | Output | PWM capable (BW Framework) |
+| I2C SDA | GPIO18 | I2C | For I2C peripherals |
+| I2C SCL | GPIO19 | I2C | For I2C peripherals |
+
+**Note:** Pin assignments follow the BW Framework standard for C6-Standard-Breakout board compatibility.
+GPIO21-23 are shared with touch panel pins - use only if display has no touch.
 
 ---
 
 ## Wiring Diagram
 
-### L298N Motor Driver Connection
+### L298N Motor Driver Connection (BW Framework Standard)
 
 ```
 L298N Module                 ESP32-C6           12V Power
@@ -124,8 +131,8 @@ L298N Module                 ESP32-C6           12V Power
 │  +12V       ├────────────┼──────────┼──────┤ +12V     │
 │  GND        ├────────────┤ GND      ├──────┤ GND      │
 │  +5V        ├────────────┤ 5V (USB) │      └──────────┘
-│  IN1        ├────────────┤ GPIO8    │
-│  IN2        ├────────────┤ GPIO9    │
+│  IN1        ├────────────┤ GPIO11   │
+│  IN2        ├────────────┤ GPIO20   │
 │  ENA        ├──(Jumper)──┤          │  (Keep jumper for full speed)
 └─────────────┘            └──────────┘
 
@@ -136,47 +143,49 @@ L298N to Linear Actuator:
 └─────────────┘            └───────────────────┘
 ```
 
-### Microswitch Connection (Position Sensors)
+### Microswitch Connection (Position Sensors) - BW Framework Standard
 
 ```
 Microswitch                  ESP32-C6
 ┌─────────────┐            ┌────────────────────┐
 │  COM        ├────────────┤ GND                │
-│  NO         ├────────────┤ GPIO18 (Open SW)   │
-│             │            │ GPIO19 (Closed SW) │
+│  NO         ├────────────┤ GPIO21 (Open SW)   │
+│             │            │ GPIO22 (Closed SW) │
 └─────────────┘            └────────────────────┘
 
 Note: Using NO (Normally Open) contacts with INPUT_PULLUP
       Switch actuated = GPIO reads LOW
       Switch not actuated = GPIO reads HIGH
+      GPIO21-22 are touch panel pins (available if no touch)
 ```
 
-### Control Buttons and Mode Switch
+### Control Buttons and Mode Switch (BW Framework Standard)
 
 ```
 Pushbuttons/Switch           ESP32-C6
 ┌─────────────┐            ┌──────────────────┐
-│ Open BTN    ├────────────┤ GPIO4            │
+│ Open BTN    ├────────────┤ GPIO0            │
 │             ├────GND─────┤ GND              │
 ├─────────────┤            │                  │
-│ Close BTN   ├────────────┤ GPIO5            │
+│ Close BTN   ├────────────┤ GPIO1            │
 │             ├────GND─────┤ GND              │
 ├─────────────┤            │                  │
-│ Mode Switch ├────────────┤ GPIO20           │
+│ Mode Switch ├────────────┤ GPIO23           │
 │             ├────GND─────┤ GND              │
 └─────────────┘            └──────────────────┘
 
 Note: All inputs use INPUT_PULLUP
       Button pressed / Switch closed = GPIO reads LOW
+      GPIO23 is touch panel pin (available if no touch)
 ```
 
-### AVR Power Sensing
+### AVR Power Sensing (BW Framework Standard)
 
 ```
 AVR Indicator LED            Voltage Divider      ESP32-C6
 ┌─────────────┐            ┌─────────────────┐   ┌──────────┐
 │  3.3V Out   ├────────────┤ R1 (10K)        │   │          │
-│             │            │     ├───────────┼───┤ GPIO0    │
+│             │            │     ├───────────┼───┤ GPIO2    │
 │  GND        ├────────────┤ R2 (10K) ── GND │   │          │
 └─────────────┘            └─────────────────┘   └──────────┘
 
@@ -185,19 +194,19 @@ Note: Voltage divider optional if AVR output is already 3.3V
       ADC threshold ~1000 indicates AVR ON
 ```
 
-### SPI TFT Display Connection (ILI9341)
+### SPI TFT Display Connection (ILI9341) - BW Framework Standard
 
 ```
 TFT Display (ILI9341)        ESP32-C6
 ┌─────────────┐            ┌──────────┐
 │  VCC        ├────────────┤ 3.3V     │
 │  GND        ├────────────┤ GND      │
-│  MOSI       ├────────────┤ GPIO6    │
-│  SCK        ├────────────┤ GPIO7    │
+│  MOSI       ├────────────┤ GPIO7    │
+│  SCK        ├────────────┤ GPIO6    │
 │  CS         ├────────────┤ GPIO10   │
-│  DC         ├────────────┤ GPIO11   │
-│  RST        ├────────────┤ GPIO21   │
-│  LED        ├────────────┤ 3.3V     │  (or GPIO for PWM control)
+│  DC         ├────────────┤ GPIO4    │
+│  RST        ├────────────┤ GPIO3    │
+│  LED        ├────────────┤ GPIO5    │  (PWM for brightness control)
 └─────────────┘            └──────────┘
 ```
 

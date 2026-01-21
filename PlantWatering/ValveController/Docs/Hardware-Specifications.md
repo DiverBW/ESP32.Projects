@@ -16,18 +16,6 @@ Complete hardware component list and wiring specifications for the Valve Control
 
 ## Components
 
-### Sensors
-
-| Component | Model | Quantity | Interface | Notes |
-|-----------|-------|----------|-----------|-------|
-| Pressure Sensor | 5V Analog Pressure Transducer | 2 | Analog | 0-100 PSI range |
-
-**Pressure Sensor Specifications:**
-- **Operating Voltage:** 5V
-- **Output:** 0.5V - 4.5V (linear with pressure)
-- **Range:** 0-100 PSI typical
-- **Thread:** 1/4" NPT
-
 ### Actuators
 
 | Component | Model | Quantity | Interface | Notes |
@@ -51,8 +39,6 @@ Complete hardware component list and wiring specifications for the Valve Control
 
 | Function | Legacy GPIO | Notes |
 |----------|-------------|-------|
-| Irrigation Pressure Sensor | GPIO33 | Analog input |
-| Drip Pressure Sensor | GPIO34 | Analog input |
 | Irrigation Valve Relay | GPIO27 | Digital output |
 | Drip Valve Relay | GPIO15 | Digital output |
 | Irrigation LED Relay | GPIO16 | Digital output |
@@ -63,53 +49,43 @@ Complete hardware component list and wiring specifications for the Valve Control
 | Display DC | GPIO11 | TFT Display |
 | Display RST | GPIO12 | TFT Display |
 
-### Proposed ESP32-C6 Pin Assignments
+### ESP32-C6 Pin Assignments (BW Framework Standard)
+
+**Updated:** January 20, 2026 - Remapped to BW Framework standard GPIO assignments
 
 | Function | GPIO | Type | Notes |
 |----------|------|------|-------|
-| Irrigation Pressure | GPIO0 | ADC | ADC1 Channel 0 |
-| Drip Pressure | GPIO1 | ADC | ADC1 Channel 1 |
-| Irrigation Valve | GPIO8 | Output | Active HIGH |
-| Drip Valve | GPIO9 | Output | Active HIGH |
-| Irrigation LED | GPIO10 | Output | Water available |
-| Drip LED | GPIO11 | Output | Water available |
-| SPI MOSI | GPIO6 | SPI | TFT Display |
-| SPI CLK | GPIO7 | SPI | TFT Display |
-| Display CS | GPIO18 | Output | TFT chip select |
-| Display DC | GPIO19 | Output | TFT data/command |
-| Display RST | GPIO21 | Output | TFT reset |
-| Status LED | GPIO15 | Output | Onboard or external |
+| Irrigation Valve | GPIO11 | Output | Active HIGH |
+| Drip Valve | GPIO20 | Output | Active HIGH |
+| Irrigation LED | GPIO21 | Output | Water available (touch pin if no touch) |
+| Drip LED | GPIO22 | Output | Water available (touch pin if no touch) |
+| SPI MOSI | GPIO7 | SPI | TFT Display (BW Framework) |
+| SPI SCK | GPIO6 | SPI | TFT Display (BW Framework) |
+| Display CS | GPIO10 | Output | TFT chip select |
+| Display DC | GPIO4 | Output | TFT data/command (BW Framework) |
+| Display RST | GPIO3 | Output | TFT reset (BW Framework) |
+| Display Backlight | GPIO5 | Output | PWM capable (BW Framework) |
+| I2C SDA | GPIO18 | I2C | For I2C peripherals |
+| I2C SCL | GPIO19 | I2C | For I2C peripherals |
+
+**Note:** Pin assignments follow the BW Framework standard for C6-Standard-Breakout board compatibility.
+GPIO21-22 are shared with touch panel pins - use only if display has no touch.
 
 ---
 
 ## Wiring Diagram
 
-### Pressure Sensor Connection
-
-```
-Pressure Sensor (x2)         ESP32-C6
-┌─────────────┐            ┌──────────────┐
-│  VCC (Red)  ├────────────┤ 5V (USB)     │
-│  GND (Black)├────────────┤ GND          │
-│  SIG (Yellow)├───────────┤ GPIO0 (Irrig)│
-│             │            │ GPIO1 (Drip) │
-└─────────────┘            └──────────────┘
-
-Note: Pressure sensors output 0.5-4.5V, requires voltage divider
-      for 3.3V ADC input or use with ADC attenuation.
-```
-
-### 4-Channel Relay Module Connection
+### 4-Channel Relay Module Connection (BW Framework Standard)
 
 ```
 4-Channel Relay Module       ESP32-C6
 ┌─────────────────┐        ┌──────────────┐
 │  VCC            ├────────┤ 5V (USB)     │
 │  GND            ├────────┤ GND          │
-│  IN1 (Irrig Valve)├──────┤ GPIO8        │
-│  IN2 (Drip Valve) ├──────┤ GPIO9        │
-│  IN3 (Irrig LED)  ├──────┤ GPIO10       │
-│  IN4 (Drip LED)   ├──────┤ GPIO11       │
+│  IN1 (Irrig Valve)├──────┤ GPIO11       │
+│  IN2 (Drip Valve) ├──────┤ GPIO20       │
+│  IN3 (Irrig LED)  ├──────┤ GPIO21       │
+│  IN4 (Drip LED)   ├──────┤ GPIO22       │
 └─────────────────┘        └──────────────┘
 ```
 
@@ -125,19 +101,19 @@ Relay Module                  Master Valve
               └── 24VAC Transformer
 ```
 
-### SPI TFT Display Connection (ILI9341)
+### SPI TFT Display Connection (ILI9341) - BW Framework Standard
 
 ```
 TFT Display (ILI9341)        ESP32-C6
 ┌─────────────┐            ┌──────────┐
 │  VCC        ├────────────┤ 3.3V     │
 │  GND        ├────────────┤ GND      │
-│  MOSI       ├────────────┤ GPIO6    │
-│  SCK        ├────────────┤ GPIO7    │
-│  CS         ├────────────┤ GPIO18   │
-│  DC         ├────────────┤ GPIO19   │
-│  RST        ├────────────┤ GPIO21   │
-│  LED        ├────────────┤ 3.3V     │  (or GPIO for PWM control)
+│  MOSI       ├────────────┤ GPIO7    │
+│  SCK        ├────────────┤ GPIO6    │
+│  CS         ├────────────┤ GPIO10   │
+│  DC         ├────────────┤ GPIO4    │
+│  RST        ├────────────┤ GPIO3    │
+│  LED        ├────────────┤ GPIO5    │  (PWM for brightness control)
 └─────────────┘            └──────────┘
 ```
 
@@ -148,7 +124,6 @@ TFT Display (ILI9341)        ESP32-C6
 | Component | Voltage | Current (typ) | Current (max) |
 |-----------|---------|---------------|---------------|
 | ESP32-C6 | 3.3V | 80mA | 500mA (WiFi TX) |
-| Pressure Sensor (x2) | 5V | 10mA each | 20mA each |
 | 4-Channel Relay Module | 5V | 60mA | 280mA (all active) |
 | TFT Display (ILI9341) | 3.3V | 50mA | 100mA (backlight) |
 
@@ -158,34 +133,16 @@ TFT Display (ILI9341)        ESP32-C6
 
 ---
 
-## Pressure Sensor Calibration
-
-Stored in NVS namespace `bw_valve`:
-
-| Key | Prefix | Description |
-|-----|--------|-------------|
-| `SLV` | i/d | Sensor Low Value (ADC at 0 PSI) |
-| `SHV` | i/d | Sensor High Value (ADC at max PSI) |
-| `PLV` | i/d | Pressure Low Value (PSI at low ADC) |
-| `PHV` | i/d | Pressure High Value (PSI at high ADC) |
-| `PT` | i/d | Pressure Threshold (water available) |
-
-Prefix: `i` = Irrigation, `d` = Drip
-
----
-
 ## Bill of Materials
 
 | Item | Quantity | Source | Notes |
 |------|----------|--------|-------|
 | ESP32-C6-DevKitC-1 | 1 | Espressif/DigiKey | |
-| Pressure Transducer 0-100PSI | 2 | Amazon | 1/4" NPT, 0.5-4.5V |
 | 4-Channel Relay Module | 1 | Amazon | Optocoupler isolated |
 | ILI9341 TFT Display | 1 | Amazon | 2.4" or 2.8" SPI, 240x320 |
 | 24VAC Transformer | 1 | - | For valve solenoids |
 | USB-C Power Supply | 1 | - | 5V 2A minimum |
 | Enclosure | 1 | - | NEMA rated for outdoor |
-| 1/4" NPT Tee Fittings | 2 | Home Depot | For sensor installation |
 
 ---
 

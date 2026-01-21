@@ -81,22 +81,28 @@ The ability to use the **C6-Standard-Breakout board** across all projects provid
 | Light Tower | 1 | 4 lights (Blue/Yellow/Green/Red) |
 | 5V Power Supply | 1 | 10A minimum for LED strip |
 
-### GPIO Assignments (Per Slot)
+### GPIO Assignments (Per Slot) - BW Framework Standard
+
+**Updated:** January 20, 2026 - Remapped to BW Framework standard GPIO assignments
 
 | Function | GPIO | Notes |
 |----------|------|-------|
-| I2C SDA | GPIO6 | VL53L1X sensor |
-| I2C SCL | GPIO7 | VL53L1X sensor |
-| SPI MOSI | GPIO2 | TFT Display |
-| SPI CLK | GPIO3 | TFT Display |
-| Display CS | GPIO4 | TFT chip select |
-| Display DC | GPIO5 | TFT data/command |
-| Display RST | GPIO21 | TFT reset |
-| LED Strip Data | GPIO18 | Via level shifter |
-| SSR Blue | GPIO8 | Light tower |
-| SSR Yellow | GPIO9 | Light tower |
-| SSR Green | GPIO10 | Via solder jumper |
-| SSR Red | GPIO11 | Via solder jumper |
+| I2C SDA | GPIO18 | VL53L1X sensor (BW Framework) |
+| I2C SCL | GPIO19 | VL53L1X sensor (BW Framework) |
+| SPI MOSI | GPIO7 | TFT Display (BW Framework) |
+| SPI SCK | GPIO6 | TFT Display (BW Framework) |
+| Display CS | GPIO10 | TFT chip select |
+| Display DC | GPIO4 | TFT data/command (BW Framework) |
+| Display RST | GPIO3 | TFT reset (BW Framework) |
+| Display Backlight | GPIO5 | PWM capable (BW Framework) |
+| LED Strip Data | GPIO11 | Via level shifter |
+| SSR Blue | GPIO0 | Light tower |
+| SSR Yellow | GPIO1 | Light tower |
+| SSR Green | GPIO2 | Light tower |
+| SSR Red | GPIO20 | Light tower |
+| Button (optional) | GPIO21 | Touch pin if no touch |
+
+**Note:** Pin assignments follow the BW Framework standard for C6-Standard-Breakout board compatibility.
 
 ### Firmware Configuration
 

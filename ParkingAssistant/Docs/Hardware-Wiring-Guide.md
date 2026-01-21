@@ -1,9 +1,26 @@
 # Hardware Wiring Guide
 
-**Project:** Parking Assistant  
-**Target MCU:** ESP32-C6  
-**Created:** January 13, 2026  
-**Status:** Design
+**Project:** Parking Assistant
+**Target MCU:** ESP32-C6
+**Created:** January 13, 2026
+**Status:** SUPERSEDED
+
+---
+
+## IMPORTANT NOTICE
+
+**This document describes the original single-board dual-slot architecture, which has been superseded.**
+
+See [Architecture-Decision-Dual-Deployment.md](Architecture-Decision-Dual-Deployment.md) for the current design using:
+- Two separate ESP32-C6 boards (one per parking slot)
+- BW Framework standard GPIO assignments
+- C6-Standard-Breakout board compatibility
+
+The information below is retained for reference only.
+
+---
+
+**Original Status:** Design
 
 ---
 

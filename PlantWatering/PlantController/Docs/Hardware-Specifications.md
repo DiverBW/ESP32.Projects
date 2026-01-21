@@ -62,18 +62,25 @@ Complete hardware component list and wiring specifications for the Plant Control
 | Display DC | - | GPIO11 | TFT Display |
 | Display RST | - | GPIO21 | TFT Display |
 
-### Proposed ESP32-C6 Pin Assignments
+### ESP32-C6 Pin Assignments (BW Framework Standard)
+
+**Updated:** January 20, 2026 - Remapped to BW Framework standard GPIO assignments
 
 | Function | GPIO | Type | Notes |
 |----------|------|------|-------|
 | Moisture Sensor | GPIO0 | ADC | ADC1 Channel 0 |
-| Valve Relay | GPIO8 | Output | Active HIGH |
-| SPI MOSI | GPIO6 | SPI | TFT Display |
-| SPI CLK | GPIO7 | SPI | TFT Display |
+| Valve Relay | GPIO11 | Output | Active HIGH |
+| SPI MOSI | GPIO7 | SPI | TFT Display (BW Framework) |
+| SPI SCK | GPIO6 | SPI | TFT Display (BW Framework) |
 | Display CS | GPIO10 | Output | TFT chip select |
-| Display DC | GPIO11 | Output | TFT data/command |
-| Display RST | GPIO21 | Output | TFT reset |
-| Status LED | GPIO15 | Output | Onboard or external |
+| Display DC | GPIO4 | Output | TFT data/command (BW Framework) |
+| Display RST | GPIO3 | Output | TFT reset (BW Framework) |
+| Display Backlight | GPIO5 | Output | PWM capable (BW Framework) |
+| I2C SDA | GPIO18 | I2C | For I2C peripherals |
+| I2C SCL | GPIO19 | I2C | For I2C peripherals |
+| Status LED | GPIO20 | Output | Activity indicator |
+
+**Note:** Pin assignments follow the BW Framework standard for C6-Standard-Breakout board compatibility.
 
 ---
 
@@ -90,14 +97,14 @@ Moisture Sensor              ESP32-C6
 └─────────────┘            └──────────┘
 ```
 
-### Relay Module Connection
+### Relay Module Connection (BW Framework Standard)
 
 ```
 Relay Module                 ESP32-C6
 ┌─────────────┐            ┌──────────┐
 │  VCC        ├────────────┤ 5V (USB) │
 │  GND        ├────────────┤ GND      │
-│  IN         ├────────────┤ GPIO8    │
+│  IN         ├────────────┤ GPIO11   │
 └─────────────┘            └──────────┘
 
                             Solenoid Valve
@@ -111,19 +118,19 @@ Relay Module                ┌──────────┐
               Power Supply
 ```
 
-### SPI TFT Display Connection (ILI9341)
+### SPI TFT Display Connection (ILI9341) - BW Framework Standard
 
 ```
 TFT Display (ILI9341)        ESP32-C6
 ┌─────────────┐            ┌──────────┐
 │  VCC        ├────────────┤ 3.3V     │
 │  GND        ├────────────┤ GND      │
-│  MOSI       ├────────────┤ GPIO6    │
-│  SCK        ├────────────┤ GPIO7    │
+│  MOSI       ├────────────┤ GPIO7    │
+│  SCK        ├────────────┤ GPIO6    │
 │  CS         ├────────────┤ GPIO10   │
-│  DC         ├────────────┤ GPIO11   │
-│  RST        ├────────────┤ GPIO21   │
-│  LED        ├────────────┤ 3.3V     │  (or GPIO for PWM control)
+│  DC         ├────────────┤ GPIO4    │
+│  RST        ├────────────┤ GPIO3    │
+│  LED        ├────────────┤ GPIO5    │  (PWM for brightness control)
 └─────────────┘            └──────────┘
 ```
 
