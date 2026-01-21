@@ -92,6 +92,37 @@ Analyzed legacy Arduino projects and documented hardware for ESP32-C6 migration:
 
 ---
 
+## Follow-up Session: Display Standard Update
+
+### Work Completed
+
+Updated all project documentation to use the ILI9341 TFT display standard instead of legacy character LCDs (20x4 and 16x2) that were incorrectly carried over from Arduino code analysis.
+
+**Changes Made:**
+- Replaced 20x4 and 16x2 character LCD (I2C/PCF8574) with ILI9341 TFT (SPI, 240x320)
+- Updated pin assignments from I2C to SPI (MOSI, CLK, CS, DC, RST)
+- Updated wiring diagrams
+- Updated power specifications (3.3V instead of 5V)
+- Updated bills of materials
+
+### Files Modified (11 total)
+
+| Project | Files |
+|---------|-------|
+| ServerRoomDoor | Hardware-Specifications.md, README.md |
+| GarageDoor | Hardware-Specifications.md, README.md |
+| PlantWatering/ValveController | Hardware-Specifications.md, README.md |
+| PlantWatering/PlantController | Hardware-Specifications.md, README.md |
+| ParkingAssistant | README.md, Architecture-Decision-Dual-Deployment.md |
+| Root Docs | Session-Summary-2026-01-20.md |
+
+### Git Operations
+
+- Commit: `44cf8a1` - Update display standard from character LCD to ILI9341 TFT
+- Pushed to remote
+
+---
+
 ## Status
 
 **Session Status:** Complete
