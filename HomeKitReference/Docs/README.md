@@ -11,123 +11,107 @@ The HomeKit Reference Application is a hardware-free test implementation used to
 1. **Component Validation:** Test BWHomeKit wrapper functionality
 2. **HAP Protocol Testing:** Verify HomeKit Accessory Protocol implementation
 3. **Development Tool:** Rapid iteration without hardware dependencies
-4. **Integration Testing:** Validate MQTT-HomeKit bridging patterns
+4. **Integration Testing:** Validate WiFi + HomeKit startup sequence
 
-## System Architecture
+## Virtual Accessories
+
+| Accessory | Service Type | Behavior |
+|-----------|--------------|----------|
+| Virtual Door | ContactSensor | Toggle with BOOT button |
+| Virtual Motion | OccupancySensor | Auto-toggles every 30 seconds |
+| Virtual Temp | TemperatureSensor | Drifts between 18-28°C |
+| Virtual Switch | Switch | Controllable from Home app |
+
+## Building
+
+### Prerequisites
+
+1. **ESP-IDF:** v5.x installed and configured
+2. **esp-homekit-sdk:** Clone to `C:\BradSoftware\ESP32\esp-homekit-sdk`
+   ```bash
+   cd C:\BradSoftware\ESP32
+   git clone --recursive https://github.com/espressif/esp-homekit-sdk.git
+   ```
+
+### Build Commands
+
+```bash
+cd C:\BradSoftware\ESP32\Projects\HomeKitReference
+idf.py set-target esp32c6
+idf.py build
+idf.py flash monitor
+```
+
+## First Run
+
+1. **Flash the device** with the built firmware
+2. **No stored WiFi?** Device starts in AP mode
+   - Connect to the AP (name: `HomeKitRef-XXYYZZ`)
+   - Configure WiFi via captive portal
+3. **Has stored WiFi?** Device connects automatically
+4. **Once connected:** HomeKit server starts
+5. **Add to Home app:**
+   - Open Home app → "+" → "Add Accessory"
+   - Scan QR code or enter setup code: `111-22-333`
+
+## Usage
+
+### Button Controls
+
+| Button | Action |
+|--------|--------|
+| BOOT (GPIO 9) | Toggle contact sensor state |
+
+### Automatic Behaviors
+
+- Occupancy sensor toggles every 30 seconds
+- Temperature drifts slowly between 18°C and 28°C
+
+### Serial Monitor Output
 
 ```
-                         ┌───────────────────────┐
-                         │ HomeKitReference App  │
-                         │      (ESP32-C6)       │
-                         └───────────┬───────────┘
-                                     │
-              ┌──────────────────────┼──────────────────────┐
-              │                      │                      │
-              ▼                      ▼                      ▼
-       ┌─────────────┐      ┌───────────────┐      ┌───────────────┐
-       │  BWHomeKit  │      │    BWMQTT     │      │  BWWebServer  │
-       │  Component  │      │   Component   │      │   Component   │
-       └─────────────┘      └───────────────┘      └───────────────┘
-              │                      │                      │
-              ▼                      ▼                      ▼
-       ┌─────────────┐      ┌───────────────┐      ┌───────────────┐
-       │   HomeKit   │      │ MQTT Broker   │      │  Config Web   │
-       │   Home App  │      │  (HomeWeb)    │      │     Page      │
-       └─────────────┘      └───────────────┘      └───────────────┘
+I (xxx) HomeKitRef: WiFi state: Connected
+I (xxx) HomeKitRef: HomeKit started successfully
+I (xxx) HomeKitRef: Setup code: 111-22-333
+I (xxx) HomeKitRef: Contact sensor: OPEN
+I (xxx) HomeKitRef: Occupancy sensor: OCCUPIED
 ```
 
-## Documentation Index
+## Configuration
 
-### Architecture & Design
+### Default Setup Code
 
-*No hardware specifications - this is a software-only reference implementation*
+`111-22-333` (stored in NVS, can be changed via API)
 
-### Implementation
+### Partition Table
 
-*Coming soon*
+| Name | Type | Size | Purpose |
+|------|------|------|---------|
+| nvs | NVS | 24KB | Application NVS |
+| factory_nvs | NVS | 24KB | HomeKit factory data |
+| factory | App | ~1.9MB | Application firmware |
 
-### Reference
+## Files
 
-*Coming soon*
+| File | Description |
+|------|-------------|
+| `CMakeLists.txt` | Project configuration |
+| `main/main.cpp` | Application entry point |
+| `sdkconfig.defaults` | ESP32-C6 configuration |
+| `partitions.csv` | Custom partition table |
 
----
-
-## Quick Reference
-
-### Virtual Accessories
-
-The reference app exposes these virtual HomeKit accessories for testing:
-
-| Accessory | Service Type | Characteristics | Notes |
-|-----------|--------------|-----------------|-------|
-| Virtual Switch | Switch | On/Off | Basic toggle test |
-| Virtual Light | Lightbulb | On/Off, Brightness | Dimmer test |
-| Virtual Sensor | TemperatureSensor | CurrentTemperature | Read-only value test |
-| Virtual Contact | ContactSensor | ContactSensorState | Binary sensor test |
-
-### Test Scenarios
-
-| Scenario | Description |
-|----------|-------------|
-| Pairing | Test QR code and setup code pairing flow |
-| State Changes | Toggle accessories from Home app |
-| State Sync | Verify state reflects in Home app after local change |
-| MQTT Bridge | Test HomeKit ↔ MQTT state synchronization |
-| Provisioning | Test BWProvisioning with HomeKit setup code field |
-
-### BW Framework Components Used
+## BW Framework Components Used
 
 | Component | Purpose |
 |-----------|---------|
-| BWCore | App identity (AppID, DeviceID, Version) |
+| BWCore | App identity (name, ID, version) |
 | BWWifi | Network connectivity |
-| BWProvisioning | Initial setup and HomeKit code configuration |
-| BWWebServer | Configuration web interface |
-| BWMQTT | HomeWeb status publishing |
 | BWHomeKit | HomeKit accessory protocol |
 
 ---
 
-## Hardware Requirements
-
-**None** - This is a reference implementation designed to run without physical hardware.
-
-The ESP32-C6 development board is the only required hardware. All accessories are virtual/simulated.
-
----
-
-## Configuration
-
-### HomeKit Setup Code
-
-- Stored in NVS via BWProvisioning
-- Can be set via captive portal or web interface
-- Format: XXX-XX-XXX (e.g., 100-00-001)
-- Category: Bridge (0x02)
-
-### NVS Keys
-
-| Namespace | Key | Description |
-|-----------|-----|-------------|
-| `bw_hk` | `setup_code` | HomeKit setup code |
-| `bw_hk` | `paired` | Pairing status |
-| `bw_app` | `app_name` | Application name |
-| `bw_app` | `device_id` | Device identifier |
-
----
-
-## Development Workflow
-
-1. **Build and Flash:** Standard ESP-IDF build
-2. **Provision:** Connect to AP, configure WiFi and HomeKit code
-3. **Pair:** Add to Home app using setup code
-4. **Test:** Interact with virtual accessories
-5. **Validate:** Check MQTT messages and web status page
-
----
-
-**Project Status:** Planned
-**Dependencies:** BWHomeKit component (not yet implemented)
-**Last Updated:** January 20, 2026
+**Project Status:** Implementation Complete (testing pending)
+**Target Hardware:** ESP32-C6
+**Last Updated:** January 21, 2026
 
 [DocCategory: Overview]

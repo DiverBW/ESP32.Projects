@@ -1,0 +1,13 @@
+idf_component_register(
+    SRCS
+        "main.cpp"
+    INCLUDE_DIRS
+        "."
+    REQUIRES
+        BWCore
+        BWWifi
+        BWHomeKit
+        nvs_flash
+        esp_event
+        driver
+)
