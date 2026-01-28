@@ -1,7 +1,7 @@
 /// @file main.cpp
 /// @brief HomeKit Reference Application
 ///
-/// Hardware-free test implementation for validating BWHomeKit component.
+/// Test implementation for validating BWHomeKit component with display feedback.
 /// Exposes virtual sensors that can be controlled via button or timer
 /// for testing HomeKit pairing and state synchronization.
 
@@ -9,23 +9,39 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
-#include "nvs_flash.h"
 #include "driver/gpio.h"
 
-#include "BWCore/AppIdentity.h"
-#include "BWWifi/WifiManager.h"
+#include "BWBoot/Boot.h"
+#include "BWDisplay/BWDisplay.h"
+#include "BWDisplay/ILI9341Driver.h"
 #include "BWHomeKit/HomeKitManager.h"
+
+using namespace BW;
 
 static const char* TAG = "HomeKitRef";
 
 // GPIO for boot button (used to toggle contact sensor)
 static constexpr gpio_num_t BUTTON_GPIO = GPIO_NUM_9;
 
+// Display pin configuration for ILI9341
+static const ILI9341Pins DISPLAY_PINS = {
+    .Mosi = GPIO_NUM_7,
+    .Clk = GPIO_NUM_6,
+    .Cs = GPIO_NUM_10,
+    .Dc = GPIO_NUM_4,
+    .Reset = GPIO_NUM_3,
+    .Backlight = GPIO_NUM_5
+};
+
 // Service pointers for main loop updates
-static BW::HomeKit::ContactSensor* s_contactSensor = nullptr;
-static BW::HomeKit::OccupancySensor* s_occupancySensor = nullptr;
-static BW::HomeKit::Switch* s_virtualSwitch = nullptr;
-static BW::HomeKit::TemperatureSensor* s_tempSensor = nullptr;
+static ContactSensor* s_contactSensor = nullptr;
+static OccupancySensor* s_occupancySensor = nullptr;
+static Switch* s_virtualSwitch = nullptr;
+static TemperatureSensor* s_tempSensor = nullptr;
+
+// Simulated temperature state
+static float s_simulatedTemp = 22.0f;
+static bool s_tempRising = true;
 
 /// @brief Configure the boot button GPIO
 static void ConfigureButton()
@@ -45,73 +61,77 @@ static bool IsButtonPressed()
     return gpio_get_level(BUTTON_GPIO) == 0;
 }
 
-/// @brief WiFi state change callback
-static void OnWifiStateChanged(bw::WifiState state, const bw::WifiEventInfo& info)
+/// @brief Update the main status display
+static void UpdateStatusDisplay()
 {
-    ESP_LOGI(TAG, "WiFi state: %s", bw::WifiStateToString(state));
+    if (!Scr::HasDisplay())
+        return;
 
-    if (state == bw::WifiState::Connected)
-    {
-        ESP_LOGI(TAG, "WiFi connected, IP: %s", info.IPAddress.c_str());
+    Scr::Clear();
 
-        // Start HomeKit when WiFi connects
-        esp_err_t ret = BW::HomeKit::HomeKit().Start();
-        if (ret == ESP_OK)
-        {
-            ESP_LOGI(TAG, "HomeKit started successfully");
-            ESP_LOGI(TAG, "Setup code: %s", BW::HomeKit::HomeKit().GetSetupCode());
-        }
-        else
-        {
-            ESP_LOGE(TAG, "Failed to start HomeKit: %s", esp_err_to_name(ret));
-        }
-    }
-    else if (state == bw::WifiState::Disconnected)
-    {
-        // Stop HomeKit when WiFi disconnects
-        BW::HomeKit::HomeKit().Stop();
-    }
+    auto* drv = Scr::GetDriver();
+    if (!drv)
+        return;
+
+    // Title (centered)
+    drv->DrawText(80, 5, "HomeKit Reference", Colors::White, FontSize::Medium);
+
+    // Sensor states - use direct pixel positioning for clean layout
+    char line[40];
+
+    snprintf(line, sizeof(line), "Door: %s", s_contactSensor->IsOpen() ? "OPEN" : "Closed");
+    drv->DrawText(10, 40, line, s_contactSensor->IsOpen() ? Colors::Orange : Colors::Green, FontSize::Medium);
+
+    snprintf(line, sizeof(line), "Motion: %s", s_occupancySensor->IsOccupied() ? "DETECTED" : "Clear");
+    drv->DrawText(10, 65, line, s_occupancySensor->IsOccupied() ? Colors::Orange : Colors::Green, FontSize::Medium);
+
+    snprintf(line, sizeof(line), "Switch: %s", s_virtualSwitch->IsOn() ? "ON" : "OFF");
+    drv->DrawText(10, 90, line, s_virtualSwitch->IsOn() ? Colors::Yellow : Colors::Gray, FontSize::Medium);
+
+    float tempF = s_simulatedTemp * 9.0f / 5.0f + 32.0f;
+    snprintf(line, sizeof(line), "Temp: %.1f F", tempF);
+    drv->DrawText(10, 115, line, Colors::Cyan, FontSize::Medium);
+
+    // Instructions at bottom (small font)
+    drv->DrawText(10, 200, "BOOT btn: toggle door", Colors::Cyan, FontSize::Small);
+    drv->DrawText(10, 215, "Motion & temp change every 30s", Colors::Cyan, FontSize::Small);
 }
 
 /// @brief HomeKit pairing state change callback
-static void OnPairingStateChanged(BW::HomeKit::PairingState state)
+static void OnPairingStateChanged(PairingState state)
 {
     switch (state)
     {
-        case BW::HomeKit::PairingState::NotPaired:
+        case PairingState::NotPaired:
             ESP_LOGI(TAG, "HomeKit: Not paired");
+            Scr::ShowStatusBar("Waiting for pairing...", StatusIcon::Info);
             break;
-        case BW::HomeKit::PairingState::PairingInProgress:
+        case PairingState::PairingInProgress:
             ESP_LOGI(TAG, "HomeKit: Pairing in progress...");
+            Scr::ShowStatusBar("Pairing in progress...", StatusIcon::Sync);
             break;
-        case BW::HomeKit::PairingState::Paired:
+        case PairingState::Paired:
             ESP_LOGI(TAG, "HomeKit: Paired successfully!");
+            Scr::ShowToast("Paired with HomeKit!", 3000);
             break;
     }
 }
 
 /// @brief Switch write callback (from HomeKit)
-///
-/// Called when HomeKit requests the switch state change.
-/// Note: The HAP layer has already updated the switch's internal state
-/// before this callback is invoked. Use this callback for application
-/// logic like controlling hardware (GPIO, relays, etc).
 static void OnSwitchWrite(bool on)
 {
     ESP_LOGI(TAG, "HomeKit requested switch: %s", on ? "ON" : "OFF");
-    // In a real application, you would control hardware here:
-    // gpio_set_level(RELAY_GPIO, on ? 1 : 0);
+
+    char msg[32];
+    snprintf(msg, sizeof(msg), "Switch: %s", on ? "ON" : "OFF");
+    Scr::ShowToast(msg, 2000);
+
+    // Update display after toast
+    vTaskDelay(pdMS_TO_TICKS(2100));
+    UpdateStatusDisplay();
 }
 
-// Simulated temperature state (used by read callback)
-static float s_simulatedTemp = 22.0f;
-static bool s_tempRising = true;
-
 /// @brief Temperature read callback (from HomeKit)
-///
-/// Called when HomeKit requests the current temperature.
-/// This allows on-demand sensor reading instead of polling.
-/// In a real application, you would read from actual hardware here.
 static float OnTemperatureRead()
 {
     // Simulate temperature drift
@@ -119,69 +139,66 @@ static float OnTemperatureRead()
     {
         s_simulatedTemp += 0.5f;
         if (s_simulatedTemp >= 28.0f)
-        {
             s_tempRising = false;
-        }
     }
     else
     {
         s_simulatedTemp -= 0.5f;
         if (s_simulatedTemp <= 18.0f)
-        {
             s_tempRising = true;
-        }
     }
 
-    ESP_LOGI(TAG, "HomeKit requested temperature: %.1f C", s_simulatedTemp);
+    float tempF = s_simulatedTemp * 9.0f / 5.0f + 32.0f;
+    ESP_LOGI(TAG, "HomeKit requested temperature: %.1f F (%.1f C)", tempF, s_simulatedTemp);
     return s_simulatedTemp;
 }
 
-/// @brief Initialize all components
-static esp_err_t InitializeComponents()
+/// @brief Initialize display (must be called before Boot)
+static void InitializeDisplay()
 {
-    esp_err_t ret;
+    ESP_LOGI(TAG, "Initializing display...");
 
-    // Initialize NVS (required for WiFi and HomeKit)
-    ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    auto driver = std::make_unique<ILI9341Driver>(DISPLAY_PINS, Orientation::Landscape);
+    Scr::RegisterDriver(std::move(driver));
+    Scr::SetBacklight(255);
+
+    if (Scr::HasDisplay())
     {
-        ESP_LOGW(TAG, "NVS partition needs erase");
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
+        ESP_LOGI(TAG, "Display initialized");
     }
-    ESP_ERROR_CHECK(ret);
-
-    // Initialize BWCore (must be first BW component)
-    ret = bw::App.Initialize("HomeKitRef", nullptr, "1.0.0");
-    if (ret != ESP_OK)
+    else
     {
-        ESP_LOGE(TAG, "Failed to initialize BWCore: %s", esp_err_to_name(ret));
-        return ret;
+        ESP_LOGW(TAG, "Display initialization failed");
     }
-    ESP_LOGI(TAG, "BWCore initialized: %s/%s",
-             bw::App.GetAppName().c_str(),
-             bw::App.GetAppId().c_str());
+}
 
-    // Initialize HomeKit (before adding services)
-    ret = BW::HomeKit::HomeKit().Initialize(BW::HomeKit::AccessoryCategory::Sensor);
+/// @brief Initialize HomeKit services (called from BeforeProvisioning hook)
+static void InitializeHomeKit(BootContext& ctx)
+{
+    ctx.SetStatus("Initializing HomeKit...");
+
+    // Initialize HomeKit
+    esp_err_t ret = HomeKit().Initialize(AccessoryCategory::Sensor);
     if (ret != ESP_OK)
     {
         ESP_LOGE(TAG, "Failed to initialize HomeKit: %s", esp_err_to_name(ret));
-        return ret;
+        ctx.RequestAbort("HomeKit init failed");
+        return;
     }
 
     // Set pairing callback
-    BW::HomeKit::HomeKit().SetPairingStateCallback(OnPairingStateChanged);
+    HomeKit().SetPairingStateCallback(OnPairingStateChanged);
 
     // Add HomeKit services
-    auto& accessory = BW::HomeKit::HomeKit().GetAccessory();
+    auto& accessory = HomeKit().GetAccessory();
 
     // Contact sensor (simulates door/window sensor)
     s_contactSensor = accessory.AddContactSensor("Virtual Door");
     if (!s_contactSensor)
     {
         ESP_LOGE(TAG, "Failed to add ContactSensor");
-        return ESP_FAIL;
+        ctx.RequestAbort("Failed to add ContactSensor");
+        return;
     }
 
     // Occupancy sensor (simulates motion detector)
@@ -189,16 +206,17 @@ static esp_err_t InitializeComponents()
     if (!s_occupancySensor)
     {
         ESP_LOGE(TAG, "Failed to add OccupancySensor");
-        return ESP_FAIL;
+        ctx.RequestAbort("Failed to add OccupancySensor");
+        return;
     }
 
     // Temperature sensor (simulates thermometer)
-    // Uses read callback for on-demand reading instead of polling
     s_tempSensor = accessory.AddTemperatureSensor("Virtual Temp");
     if (!s_tempSensor)
     {
         ESP_LOGE(TAG, "Failed to add TemperatureSensor");
-        return ESP_FAIL;
+        ctx.RequestAbort("Failed to add TemperatureSensor");
+        return;
     }
     s_tempSensor->SetReadCallback(OnTemperatureRead);
 
@@ -207,24 +225,90 @@ static esp_err_t InitializeComponents()
     if (!s_virtualSwitch)
     {
         ESP_LOGE(TAG, "Failed to add Switch");
-        return ESP_FAIL;
+        ctx.RequestAbort("Failed to add Switch");
+        return;
     }
     s_virtualSwitch->SetWriteCallback(OnSwitchWrite);
 
     ESP_LOGI(TAG, "Added %d HomeKit services", (int)accessory.GetServiceCount());
+}
 
-    // Initialize WiFi
-    ret = bw::WifiManager::Instance().Initialize();
+/// @brief Start HomeKit server (called from AfterWifiConnected hook)
+static void StartHomeKit(BootContext& ctx)
+{
+    ctx.SetStatus("Starting HomeKit...");
+
+    // Note: Provisioning web server is now automatically stopped when provisioning
+    // completes (in BWProvisioning), so no manual Stop() call is needed here.
+
+    esp_err_t ret = HomeKit().Start();
     if (ret != ESP_OK)
     {
-        ESP_LOGE(TAG, "Failed to initialize WiFi: %s", esp_err_to_name(ret));
-        return ret;
+        ESP_LOGE(TAG, "Failed to start HomeKit: %s", esp_err_to_name(ret));
+        Scr::ShowError("HomeKit start failed");
+        return;
     }
 
-    // Set WiFi callback
-    bw::WifiManager::Instance().SetStateCallback(OnWifiStateChanged);
+    ESP_LOGI(TAG, "HomeKit started successfully");
+    ESP_LOGI(TAG, "Setup code: %s", HomeKit().GetSetupCode());
 
-    return ESP_OK;
+    // Show QR code for easy pairing if not already paired
+    if (!HomeKit().IsPaired())
+    {
+        // Wait for any active overlay (toast) to clear before showing QR code
+        while (Scr::HasActiveOverlay())
+        {
+            vTaskDelay(pdMS_TO_TICKS(100));
+        }
+
+        const char* setupPayload = HomeKit().GetSetupPayload();
+        if (setupPayload && Scr::ShowQRCode(setupPayload, "Scan to Pair"))
+        {
+            ESP_LOGI(TAG, "QR code displayed for pairing");
+            ESP_LOGI(TAG, "Waiting for pairing (press BOOT button to skip)...");
+
+            // Wait until paired, button pressed, or 60 second timeout
+            uint32_t startTime = xTaskGetTickCount() * portTICK_PERIOD_MS;
+            const uint32_t PAIRING_TIMEOUT_MS = 60000;
+
+            while (!HomeKit().IsPaired())
+            {
+                // Check for button press to skip
+                if (IsButtonPressed())
+                {
+                    ESP_LOGI(TAG, "Button pressed - skipping QR code display");
+                    vTaskDelay(pdMS_TO_TICKS(300));  // Debounce
+                    break;
+                }
+
+                // Check timeout
+                uint32_t elapsed = (xTaskGetTickCount() * portTICK_PERIOD_MS) - startTime;
+                if (elapsed >= PAIRING_TIMEOUT_MS)
+                {
+                    ESP_LOGI(TAG, "QR code timeout - proceeding to main display");
+                    break;
+                }
+
+                vTaskDelay(pdMS_TO_TICKS(100));
+            }
+
+            if (HomeKit().IsPaired())
+            {
+                ESP_LOGI(TAG, "Device paired successfully!");
+            }
+        }
+        else
+        {
+            // Fall back to showing setup code as toast
+            char msg[48];
+            snprintf(msg, sizeof(msg), "Pair: %s", HomeKit().GetSetupCode());
+            Scr::ShowToast(msg, 5000);
+            vTaskDelay(pdMS_TO_TICKS(5500));
+        }
+    }
+
+    // Show main status display
+    UpdateStatusDisplay();
 }
 
 /// @brief Main application entry point
@@ -237,36 +321,40 @@ extern "C" void app_main()
     // Configure button GPIO
     ConfigureButton();
 
-    // Initialize all components
-    esp_err_t ret = InitializeComponents();
-    if (ret != ESP_OK)
+    // Initialize display FIRST (before Boot, so provisioning screens work)
+    InitializeDisplay();
+
+    // Use BWBoot for proper boot sequence
+    // This BLOCKS until WiFi is connected (handling provisioning if needed)
+    BootResult result = Boot()
+        .WithAppIdentity("HomeKitRef", nullptr, "1.0.0")
+        .WithSplash("HomeKit Reference", "v1.0.0", 2000)
+        .WithProvisioning("HomeKit Reference", false)  // No discovery (HomeWeb)
+        .BeforeProvisioning(InitializeHomeKit)
+        .AfterWifiConnected(StartHomeKit)
+        .Start();
+
+    // Check boot result
+    if (!result.Success)
     {
-        ESP_LOGE(TAG, "Initialization failed, halting");
-        return;
+        ESP_LOGE(TAG, "Boot failed at phase %s: %s",
+                 BootPhaseToString(result.FailedPhase),
+                 result.ErrorMessage.c_str());
+        Scr::ShowError("Boot failed");
+        return;  // Don't enter main loop if boot failed
     }
 
-    // Try to connect with stored credentials
-    if (bw::WifiManager::Instance().HasStoredCredentials())
-    {
-        ESP_LOGI(TAG, "Connecting to stored WiFi...");
-        bw::WifiManager::Instance().Connect();
-    }
-    else
-    {
-        ESP_LOGW(TAG, "No stored WiFi credentials");
-        ESP_LOGI(TAG, "Starting AP mode for provisioning...");
-        bw::WifiManager::Instance().StartAP();
-    }
+    ESP_LOGI(TAG, "Boot complete, WiFi connected");
 
     // Main loop variables
     bool lastButtonState = false;
     uint32_t occupancyToggleTime = 0;
+    bool displayNeedsUpdate = false;
 
     ESP_LOGI(TAG, "Entering main loop");
     ESP_LOGI(TAG, "Press BOOT button to toggle contact sensor");
-    ESP_LOGI(TAG, "Temperature uses read callback (on-demand from HomeKit)");
 
-    // Main loop
+    // Main loop - ONLY runs after WiFi is connected
     while (true)
     {
         uint32_t now = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -279,6 +367,11 @@ extern "C" void app_main()
             bool newState = !s_contactSensor->IsOpen();
             s_contactSensor->SetOpen(newState);
             ESP_LOGI(TAG, "Contact sensor: %s", newState ? "OPEN" : "CLOSED");
+
+            char msg[32];
+            snprintf(msg, sizeof(msg), "Door: %s", newState ? "OPEN" : "CLOSED");
+            Scr::ShowToast(msg, 2000);
+            displayNeedsUpdate = true;
         }
         lastButtonState = buttonPressed;
 
@@ -289,10 +382,36 @@ extern "C" void app_main()
             bool newState = !s_occupancySensor->IsOccupied();
             s_occupancySensor->SetOccupied(newState);
             ESP_LOGI(TAG, "Occupancy sensor: %s", newState ? "OCCUPIED" : "NOT OCCUPIED");
+
+            // Also update temperature (ramp up/down)
+            if (s_tempRising)
+            {
+                s_simulatedTemp += 0.5f;
+                if (s_simulatedTemp >= 28.0f)
+                    s_tempRising = false;
+            }
+            else
+            {
+                s_simulatedTemp -= 0.5f;
+                if (s_simulatedTemp <= 18.0f)
+                    s_tempRising = true;
+            }
+            s_tempSensor->SetTemperature(s_simulatedTemp);
+            float tempF = s_simulatedTemp * 9.0f / 5.0f + 32.0f;
+            ESP_LOGI(TAG, "Temperature updated: %.1f F (%.1f C)", tempF, s_simulatedTemp);
+
+            char msg[32];
+            snprintf(msg, sizeof(msg), "Motion: %s", newState ? "DETECTED" : "Clear");
+            Scr::ShowToast(msg, 2000);
+            displayNeedsUpdate = true;
         }
 
-        // Note: Temperature sensor uses read callback - no polling needed.
-        // HomeKit will call OnTemperatureRead() when it needs the current value.
+        // Update main display after toast dismisses
+        if (displayNeedsUpdate && !Scr::HasActiveOverlay())
+        {
+            UpdateStatusDisplay();
+            displayNeedsUpdate = false;
+        }
 
         // Small delay to prevent tight loop
         vTaskDelay(pdMS_TO_TICKS(50));

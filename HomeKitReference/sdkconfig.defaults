@@ -23,6 +23,9 @@ CONFIG_NVS_ENCRYPTION=n
 # ESP-TLS (required for HomeKit secure pairing)
 CONFIG_ESP_TLS_SERVER=y
 
+# LWIP (increase sockets for HomeKit HAP server)
+CONFIG_LWIP_MAX_SOCKETS=16
+
 # FreeRTOS
 CONFIG_FREERTOS_HZ=1000
 

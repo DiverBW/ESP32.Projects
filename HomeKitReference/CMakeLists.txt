@@ -6,7 +6,15 @@ cmake_minimum_required(VERSION 3.16)
 # BW Framework components
 set(EXTRA_COMPONENT_DIRS
     "C:/BradSoftware/ESP32/BW Framework/BWCore"
+    "C:/BradSoftware/ESP32/BW Framework/BWBoot"
+    "C:/BradSoftware/ESP32/BW Framework/BWDisplay"
     "C:/BradSoftware/ESP32/BW Framework/BWWifi"
+    "C:/BradSoftware/ESP32/BW Framework/BWWebServer"
+    "C:/BradSoftware/ESP32/BW Framework/BWDiscovery"
+    "C:/BradSoftware/ESP32/BW Framework/BWProvisioning"
+    "C:/BradSoftware/ESP32/BW Framework/BWMQTT"
+    "C:/BradSoftware/ESP32/BW Framework/BWOTA"
+    "C:/BradSoftware/ESP32/BW Framework/BWStatusLed"
     "C:/BradSoftware/ESP32/BW Framework/BWHomeKit"
     "C:/BradSoftware/ESP32/esp-homekit-sdk/components/homekit"
 )

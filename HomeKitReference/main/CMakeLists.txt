@@ -5,9 +5,9 @@ idf_component_register(
         "."
     REQUIRES
         BWCore
-        BWWifi
+        BWBoot
+        BWDisplay
+        BWProvisioning
         BWHomeKit
-        nvs_flash
-        esp_event
         driver
 )
